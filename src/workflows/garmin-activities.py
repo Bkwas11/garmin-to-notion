@@ -134,8 +134,8 @@ def activity_exists(
     lookup_min_date = activity_date - timedelta(minutes=5)
     lookup_max_date = activity_date + timedelta(minutes=5)
 
-    query = notion_client.databases.query(
-        database_id=database_id,
+    query = notion_client.data_sources.query(
+        data_source_id=database_id,
         filter={
             "and": [
                 {"property": "Date", "date": {"on_or_after": lookup_min_date.isoformat()}},
@@ -231,7 +231,7 @@ def create_activity(notion_client: NotionClient, database_id: str, activity: dic
     }
 
     page = {
-        "parent": {"database_id": database_id},
+        "parent": {"data_source_id": database_id},
         "properties": properties,
     }
 

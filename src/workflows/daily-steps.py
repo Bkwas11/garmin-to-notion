@@ -22,8 +22,8 @@ def daily_steps_exist(client, database_id, activity_date):
     """
     Check if daily step count already exists in the Notion database.
     """
-    query = client.databases.query(
-        database_id=database_id,
+    query = client.data_sources.query(
+        data_source_id=database_id,
         filter={
             "and": [
                 {"property": "Date", "date": {"equals": activity_date}},
@@ -88,7 +88,7 @@ def create_daily_steps(client, database_id, steps):
     }
 
     page = {
-        "parent": {"database_id": database_id},
+        "parent": {"data_source_id": database_id},
         "properties": properties,
     }
 

@@ -166,8 +166,8 @@ def replace_activity_name_by_typeId(typeId):
 
 
 def get_existing_record(client, database_id, activity_name):
-    query = client.databases.query(
-        database_id=database_id,
+    query = client.data_sources.query(
+        data_source_id=database_id,
         filter={
             "and": [
                 {"property": "Record", "title": {"equals": activity_name}},
@@ -179,8 +179,8 @@ def get_existing_record(client, database_id, activity_name):
 
 
 def get_record_by_date_and_name(client, database_id, activity_date, activity_name):
-    query = client.databases.query(
-        database_id=database_id,
+    query = client.data_sources.query(
+        data_source_id=database_id,
         filter={
             "and": [
                 {"property": "Record", "title": {"equals": activity_name}},
@@ -238,7 +238,7 @@ def write_new_record(client, database_id, activity_date, activity_type, activity
 
     try:
         client.pages.create(
-            parent={"database_id": database_id},
+            parent={"data_source_id": database_id},
             properties=properties,
             icon={"emoji": icon},
             cover={"type": "external", "external": {"url": cover}}

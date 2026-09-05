@@ -42,8 +42,8 @@ def format_date_for_name(sleep_date):
 
 
 def sleep_data_exists(client, database_id, sleep_date):
-    query = client.databases.query(
-        database_id=database_id,
+    query = client.data_sources.query(
+        data_source_id=database_id,
         filter={"property": "Long Date", "date": {"equals": sleep_date}}
     )
     results = query.get('results', [])
@@ -84,7 +84,7 @@ def create_sleep_data(client, database_id, sleep_data, skip_zero_sleep=True):
         "Resting HR": {"number": sleep_data.get('restingHeartRate', 0)}
     }
 
-    client.pages.create(parent={"database_id": database_id}, properties=properties, icon={"emoji": "😴"})
+    client.pages.create(parent={"data_source_id": database_id}, properties=properties, icon={"emoji": "😴"})
     print(f"Created sleep entry for: {sleep_date}")
 
 

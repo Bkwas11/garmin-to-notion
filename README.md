@@ -13,6 +13,7 @@ This project connects your Garmin activities and personal records to your Notion
   👣  Optional daily steps tracker
   😴  Optional sleep data tracker  
   📅  Optional monthly training calendar with planned mileage, Garmin workouts, completion, and weekly totals
+  🏋️  Optional strength log with completed exercises, sets, reps, weight, and volume
   🤖  Zero-touch automation once configured  
   📱  Compatible with all Garmin activities and devices  
   🔧  Easy setup with clear instructions and minimal coding required  
@@ -47,6 +48,7 @@ For more advanced users, follow these steps to set up the integration:
   * NOTION_STEPS_DB_ID (optional)
   * NOTION_SLEEP_DB_ID (optional)
   * NOTION_CALENDAR_DB_ID (optional; see Training Calendar below)
+  * NOTION_STRENGTH_DB_ID (optional; see Strength Log below)
 ### 6. Run Scripts (if not using automatic workflow)
 * Run [garmin-activities.py](https://github.com/chloevoyer/garmin-to-notion/blob/main/garmin-activities.py) to sync your Garmin activities to Notion.  
 `python garmin-activities.py`
@@ -83,6 +85,14 @@ Create a separate Notion database and add these properties with the exact names 
 Then share the database with your Notion integration, save its data-source ID as the GitHub Actions secret `NOTION_CALENDAR_DB_ID`, and add a Notion **Calendar view** using the `Date` property to the main dashboard. Show `Planned Miles`, `Actual Miles`, `Garmin Workouts`, `Complete`, and `Weekly Planned Miles` on calendar cards.
 
 The first run fills the current month. After you edit planned mileage, the next daily run refreshes completion and weekly totals. Activity distances, daily-step distances, longest-run records, longest-ride records, and pace are written in miles. To convert older activity values already stored in Notion, manually run the workflow once with `GARMIN_ACTIVITIES_FETCH_LIMIT` set high enough to include those activities (up to 1000).
+
+## Strength Log
+
+The optional Strength Log imports each completed, non-rest set from Garmin strength activities. It records the workout and exercise names, date, set number and type, reps, weight in pounds, per-set volume, and duration. A stable set key prevents duplicate rows and lets later Garmin corrections update the existing Notion row.
+
+Create a separate Notion database with these properties: `Set` (Title), `Date` (Date), `Workout` (Text), `Exercise` (Text), `Set Number` (Number), `Set Type` (Select with Active, Warmup, Drop Set, Failure, and Other), `Reps` (Number), `Weight (lb)` (Number), `Volume (lb)` (Number), `Duration (sec)` (Number), `Activity ID` (Text), and `Set Key` (Text). Share it with the Notion integration and save its data-source ID as `NOTION_STRENGTH_DB_ID`.
+
+The sync checks the most recent Garmin activities. Set `GARMIN_STRENGTH_FETCH_LIMIT` higher for the first run if you want to import older strength sessions; when omitted, it uses `GARMIN_ACTIVITIES_FETCH_LIMIT`.
 ## Example Configuration :pencil:  
 You can customize the scripts to fit your needs by modifying environment variables and Notion database settings.  
 

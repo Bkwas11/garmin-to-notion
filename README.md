@@ -8,7 +8,7 @@ This project connects your Garmin activities and personal records to your Notion
 
 ## Features :sparkles:  
   🔄  Automatically sync Garmin activities to Notion in real-time  
-  📊  Track detailed activity metrics, with running pace in min/mi
+  📊  Track detailed activity metrics, with distances in miles and running pace in min/mi
   🎯  Extract and track personal records (fastest 1K, longest ride)  
   👣  Optional daily steps tracker
   😴  Optional sleep data tracker  
@@ -55,7 +55,7 @@ For more advanced users, follow these steps to set up the integration:
 
 ## Training Calendar
 
-The optional Training Calendar creates one Notion row for every day of the current month. You can enter **Planned Miles** directly in Notion. Each sync then:
+The Training Calendar on the main Notion dashboard creates one row for every day of the current month. You can enter **Planned Miles** directly in Notion. Each sync then:
 
 - imports workouts assigned to dates on your Garmin Connect calendar;
 - totals completed running mileage in miles;
@@ -80,9 +80,9 @@ Create a separate Notion database and add these properties with the exact names 
 | Weekly Planned Miles | Number |
 | Weekly Actual Miles | Number |
 
-Then share the database with your Notion integration, save its data-source ID as the GitHub Actions secret `NOTION_CALENDAR_DB_ID`, and add a Notion **Calendar view** using the `Date` property. Show `Planned Miles`, `Actual Miles`, `Garmin Workouts`, `Complete`, and `Weekly Planned Miles` on calendar cards.
+Then share the database with your Notion integration, save its data-source ID as the GitHub Actions secret `NOTION_CALENDAR_DB_ID`, and add a Notion **Calendar view** using the `Date` property to the main dashboard. Show `Planned Miles`, `Actual Miles`, `Garmin Workouts`, `Complete`, and `Weekly Planned Miles` on calendar cards.
 
-The first run fills the current month. After you edit planned mileage, the next daily run refreshes completion and weekly totals. To convert older activity pace values already stored in Notion, manually run the workflow once with `GARMIN_ACTIVITIES_FETCH_LIMIT` set high enough to include those activities (up to 1000).
+The first run fills the current month. After you edit planned mileage, the next daily run refreshes completion and weekly totals. Activity distances, daily-step distances, longest-run records, longest-ride records, and pace are written in miles. To convert older activity values already stored in Notion, manually run the workflow once with `GARMIN_ACTIVITIES_FETCH_LIMIT` set high enough to include those activities (up to 1000).
 ## Example Configuration :pencil:  
 You can customize the scripts to fit your needs by modifying environment variables and Notion database settings.  
 

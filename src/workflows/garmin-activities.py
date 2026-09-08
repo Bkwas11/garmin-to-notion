@@ -4,7 +4,12 @@ from dotenv import load_dotenv
 from garminconnect import Garmin as GarminClient
 from notion_client import Client as NotionClient
 
-from src.helpers import format_pace_per_mile, get_garmin_client, get_notion_client
+from src.helpers import (
+    format_pace_per_mile,
+    get_garmin_client,
+    get_notion_client,
+    meters_to_miles,
+)
 
 ACTIVITY_ICONS = {
     "Barre": "https://img.icons8.com/?size=100&id=66924&format=png&color=000000",
@@ -157,7 +162,7 @@ def activity_needs_update(existing_activity: dict, new_activity: dict) -> bool:
     )
 
     return (
-        existing_props['Distance (km)']['number'] != round(new_activity.get('distance', 0) / 1000, 2) or
+        existing_props['Distance (mi)']['number'] != round(meters_to_miles(new_activity.get('distance')), 2) or
         existing_props['Duration (min)']['number'] != round(new_activity.get('duration', 0) / 60, 2) or
         existing_props['Calories']['number'] != round(new_activity.get('calories', 0)) or
         existing_props['Avg Pace']['rich_text'][0]['text']['content'] != format_pace(
@@ -201,7 +206,7 @@ def create_activity(notion_client: NotionClient, database_id: str, activity: dic
         "Activity Type": {"select": {"name": activity_type}},
         "Subactivity Type": {"select": {"name": activity_subtype}},
         "Activity Name": {"title": [{"text": {"content": activity_name}}]},
-        "Distance (km)": {"number": round(activity.get('distance', 0) / 1000, 2)},
+        "Distance (mi)": {"number": round(meters_to_miles(activity.get('distance')), 2)},
         "Duration (min)": {"number": round(activity.get('duration', 0) / 60, 2)},
         "Calories": {"number": round(activity.get('calories', 0))},
         "Avg Pace": {"rich_text": [{"text": {"content": format_pace(activity.get('averageSpeed', 0))}}]},
@@ -245,7 +250,7 @@ def update_activity(notion_client: NotionClient, existing_activity: dict, new_ac
     properties = {
         "Activity Type": {"select": {"name": activity_type}},
         "Subactivity Type": {"select": {"name": activity_subtype}},
-        "Distance (km)": {"number": round(new_activity.get('distance', 0) / 1000, 2)},
+        "Distance (mi)": {"number": round(meters_to_miles(new_activity.get('distance')), 2)},
         "Duration (min)": {"number": round(new_activity.get('duration', 0) / 60, 2)},
         "Calories": {"number": round(new_activity.get('calories', 0))},
         "Avg Pace": {"rich_text": [{"text": {"content": format_pace(new_activity.get('averageSpeed', 0))}}]},

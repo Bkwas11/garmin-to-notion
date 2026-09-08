@@ -7,6 +7,7 @@ from src.helpers import (
     format_race_pace_per_mile,
     get_garmin_client,
     get_notion_client,
+    meters_to_miles,
 )
 
 
@@ -92,8 +93,8 @@ def format_garmin_value(value, activity_type, typeId):
         return formatted_value, formatted_pace
 
     if typeId in [7, 8]:  # Longest Run, Longest Ride
-        value_km = value / 1000
-        formatted_value = f"{value_km:.2f} km"
+        value_miles = meters_to_miles(value)
+        formatted_value = f"{value_miles:.2f} mi"
         pace = ""  # No pace for these types
         return formatted_value, pace
 

@@ -6,6 +6,7 @@ from ._units import (
     format_duration,
     format_pace_per_mile,
     format_race_pace_per_mile,
+    meters_to_miles,
 )
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
     'format_duration',
     'format_pace_per_mile',
     'format_race_pace_per_mile',
+    'meters_to_miles',
     'get_garmin_client',
     'get_notion_client',
 ]

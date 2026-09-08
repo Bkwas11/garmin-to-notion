@@ -9,7 +9,7 @@ on:
         type: number
         default: 10
 env:
-  TZ: 'America/Toronto'
+  TZ: 'America/New_York'
 
 jobs:
   sync:
@@ -31,10 +31,13 @@ jobs:
           NOTION_PR_DB_ID: ${{ secrets.NOTION_PR_DB_ID }}
           NOTION_STEPS_DB_ID: ${{ secrets.NOTION_STEPS_DB_ID }}
           NOTION_SLEEP_DB_ID: ${{ secrets.NOTION_SLEEP_DB_ID }}
+          NOTION_CALENDAR_DB_ID: ${{ secrets.NOTION_CALENDAR_DB_ID }}
           GARMIN_ACTIVITIES_FETCH_LIMIT: ${{ inputs.GARMIN_ACTIVITIES_FETCH_LIMIT || '10' }}
-          TZ: 'America/Toronto'
+          TRAINING_CALENDAR_TIMEZONE: 'America/New_York'
+          TZ: 'America/New_York'
         run: |
           uv run python -m src.workflows.garmin-activities
           uv run python -m src.workflows.personal-records
           uv run python -m src.workflows.daily-steps
           uv run python -m src.workflows.sleep-data
+          uv run python -m src.workflows.training-calendar

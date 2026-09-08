@@ -8,10 +8,11 @@ This project connects your Garmin activities and personal records to your Notion
 
 ## Features :sparkles:  
   🔄  Automatically sync Garmin activities to Notion in real-time  
-  📊  Track detailed activity metrics (distance, pace, heart rate)  
+  📊  Track detailed activity metrics, with running pace in min/mi
   🎯  Extract and track personal records (fastest 1K, longest ride)  
   👣  Optional daily steps tracker
   😴  Optional sleep data tracker  
+  📅  Optional monthly training calendar with planned mileage, Garmin workouts, completion, and weekly totals
   🤖  Zero-touch automation once configured  
   📱  Compatible with all Garmin activities and devices  
   🔧  Easy setup with clear instructions and minimal coding required  
@@ -45,11 +46,43 @@ For more advanced users, follow these steps to set up the integration:
   * NOTION_PR_DB_ID
   * NOTION_STEPS_DB_ID (optional)
   * NOTION_SLEEP_DB_ID (optional)
+  * NOTION_CALENDAR_DB_ID (optional; see Training Calendar below)
 ### 6. Run Scripts (if not using automatic workflow)
 * Run [garmin-activities.py](https://github.com/chloevoyer/garmin-to-notion/blob/main/garmin-activities.py) to sync your Garmin activities to Notion.  
 `python garmin-activities.py`
 * Run [person-records.py](https://github.com/chloevoyer/garmin-to-notion/blob/main/personal-records.py) to extract activity records (e.g., fastest run, longest ride).  
 `python personal-records.py` 
+
+## Training Calendar
+
+The optional Training Calendar creates one Notion row for every day of the current month. You can enter **Planned Miles** directly in Notion. Each sync then:
+
+- imports workouts assigned to dates on your Garmin Connect calendar;
+- totals completed running mileage in miles;
+- checks run goals and matches scheduled workouts to completed activity types;
+- adds a checkmark and strikethrough when the full day's plan is complete; and
+- repeats the planned and actual weekly mileage totals on every day in that week.
+
+Create a separate Notion database and add these properties with the exact names and types shown:
+
+| Property | Notion type |
+| --- | --- |
+| Day | Title |
+| Date | Date |
+| Planned Miles | Number |
+| Actual Miles | Number |
+| Garmin Workouts | Text |
+| Completed Activities | Text |
+| Run Goal Met | Checkbox |
+| Workout Complete | Checkbox |
+| Complete | Checkbox |
+| Week | Text |
+| Weekly Planned Miles | Number |
+| Weekly Actual Miles | Number |
+
+Then share the database with your Notion integration, save its data-source ID as the GitHub Actions secret `NOTION_CALENDAR_DB_ID`, and add a Notion **Calendar view** using the `Date` property. Show `Planned Miles`, `Actual Miles`, `Garmin Workouts`, `Complete`, and `Weekly Planned Miles` on calendar cards.
+
+The first run fills the current month. After you edit planned mileage, the next daily run refreshes completion and weekly totals. To convert older activity pace values already stored in Notion, manually run the workflow once with `GARMIN_ACTIVITIES_FETCH_LIMIT` set high enough to include those activities (up to 1000).
 ## Example Configuration :pencil:  
 You can customize the scripts to fit your needs by modifying environment variables and Notion database settings.  
 

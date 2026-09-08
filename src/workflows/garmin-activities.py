@@ -1,14 +1,10 @@
-from datetime import datetime, UTC, timedelta
+from datetime import UTC, datetime, timedelta
 
-import pytz
 from dotenv import load_dotenv
 from garminconnect import Garmin as GarminClient
 from notion_client import Client as NotionClient
 
-from src.helpers import get_garmin_client, get_notion_client
-
-# Your local time zone, replace with the appropriate one if needed
-local_tz = pytz.timezone('America/Toronto')
+from src.helpers import format_pace_per_mile, get_garmin_client, get_notion_client
 
 ACTIVITY_ICONS = {
     "Barre": "https://img.icons8.com/?size=100&id=66924&format=png&color=000000",
@@ -107,13 +103,7 @@ def format_training_effect(training_effect_label: str) -> str:
 
 
 def format_pace(average_speed: float) -> str:
-    if average_speed > 0:
-        pace_min_km = 1000 / (average_speed * 60)  # Convert to min/km
-        minutes = int(pace_min_km)
-        seconds = int((pace_min_km - minutes) * 60)
-        return f"{minutes}:{seconds:02d} min/km"
-    else:
-        return ""
+    return format_pace_per_mile(average_speed)
 
 
 def activity_exists(
@@ -309,7 +299,7 @@ def main():
         )
 
         activity_name = format_entertainment(activity.get('activityName', 'Unnamed Activity'))
-        activity_type, activity_subtype = format_activity_type(
+        activity_type, _activity_subtype = format_activity_type(
             activity.get('activityType', {}).get('typeKey', 'Unknown'),
             activity_name
         )

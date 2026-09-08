@@ -2,7 +2,12 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from src.helpers import get_garmin_client, get_notion_client
+from src.helpers import (
+    format_duration,
+    format_race_pace_per_mile,
+    get_garmin_client,
+    get_notion_client,
+)
 
 
 def get_icon_for_record(activity_name):
@@ -56,33 +61,21 @@ def format_activity_name(activity_name):
 
 def format_garmin_value(value, activity_type, typeId):
     if typeId == 1:  # 1K
-        total_seconds = round(value)  # Round to the nearest second
-        minutes = total_seconds // 60
-        seconds = total_seconds % 60
-        formatted_value = f"{minutes}:{seconds:02d} /km"
-        pace = formatted_value  # For these types, the value is the pace
+        total_seconds = round(value)
+        formatted_value = format_duration(total_seconds)
+        pace = format_race_pace_per_mile(total_seconds, 1)
         return formatted_value, pace
 
     if typeId == 2:  # 1mile
-        total_seconds = round(value)  # Round to the nearest second
-        minutes = total_seconds // 60
-        seconds = total_seconds % 60
-        formatted_value = f"{minutes}:{seconds:02d}"
-        total_pseconds = total_seconds / 1.60934  # Divide by 1.60934 to get pace per km
-        pminutes = int(total_pseconds // 60)  # Convert to integer
-        pseconds = int(total_pseconds % 60)  # Convert to integer
-        formatted_pace = f"{pminutes}:{pseconds:02d} /km"
+        total_seconds = round(value)
+        formatted_value = format_duration(total_seconds)
+        formatted_pace = format_duration(total_seconds, "/mi")
         return formatted_value, formatted_pace
 
     if typeId == 3:  # 5K
         total_seconds = round(value)
-        minutes = total_seconds // 60
-        seconds = total_seconds % 60
-        formatted_value = f"{minutes}:{seconds:02d}"
-        total_pseconds = total_seconds // 5  # Divide by 5km
-        pminutes = total_pseconds // 60
-        pseconds = total_pseconds % 60
-        formatted_pace = f"{pminutes}:{pseconds:02d} /km"
+        formatted_value = format_duration(total_seconds)
+        formatted_pace = format_race_pace_per_mile(total_seconds, 5)
         return formatted_value, formatted_pace
 
     if typeId == 4:  # 10K
@@ -95,11 +88,7 @@ def format_garmin_value(value, activity_type, typeId):
             formatted_value = f"{hours}:{minutes:02d}:{seconds:02d}"
         else:
             formatted_value = f"{minutes}:{seconds:02d}"
-        total_pseconds = total_seconds // 10  # Divide by 10km
-        phours = total_pseconds // 3600
-        pminutes = (total_pseconds % 3600) // 60
-        pseconds = total_pseconds % 60
-        formatted_pace = f"{pminutes}:{pseconds:02d} /km"
+        formatted_pace = format_race_pace_per_mile(total_seconds, 10)
         return formatted_value, formatted_pace
 
     if typeId in [7, 8]:  # Longest Run, Longest Ride

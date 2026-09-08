@@ -64,6 +64,8 @@ The Training Calendar on the main Notion dashboard creates one row for every day
 - checks run goals and matches scheduled workouts to completed activity types;
 - adds a checkmark and strikethrough when the full day's plan is complete; and
 - repeats the planned and actual weekly mileage totals on every day in that week.
+- shows a yellow sleep status for 7–7.99 hours and green for 8 or more hours; and
+- adds a compact mileage, run-goal, strength, and sleep summary to the final visible day of each week.
 
 Create a separate Notion database and add these properties with the exact names and types shown:
 
@@ -81,6 +83,15 @@ Create a separate Notion database and add these properties with the exact names 
 | Week | Text |
 | Weekly Planned Miles | Number |
 | Weekly Actual Miles | Number |
+| Sleep Hours | Number |
+| Sleep Status | Select: 🟢 8+ hours, 🟡 7+ hours, Under 7 hours |
+| Weekly Run Goals Met | Number |
+| Weekly Run Goals Planned | Number |
+| Weekly Strength Completed | Number |
+| Weekly Strength Planned | Number |
+| Weekly Avg Sleep | Number |
+| Weekly Sleep Goals Met | Number |
+| Weekly Summary | Text |
 
 Then share the database with your Notion integration, save its data-source ID as the GitHub Actions secret `NOTION_CALENDAR_DB_ID`, and add a Notion **Calendar view** using the `Date` property to the main dashboard. Show `Planned Miles`, `Actual Miles`, `Garmin Workouts`, `Complete`, and `Weekly Planned Miles` on calendar cards.
 

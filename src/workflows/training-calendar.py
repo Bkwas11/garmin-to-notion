@@ -17,7 +17,9 @@ from src.helpers._training_calendar import (
     dates_in_range,
     month_bounds,
     parse_scheduled_workouts,
+    sleep_status,
     summarize_activities,
+    weekly_summary,
 )
 
 CALENDAR_PROPERTIES = {
@@ -33,6 +35,15 @@ CALENDAR_PROPERTIES = {
     "Week": "rich_text",
     "Weekly Planned Miles": "number",
     "Weekly Actual Miles": "number",
+    "Sleep Hours": "number",
+    "Sleep Status": "select",
+    "Weekly Run Goals Met": "number",
+    "Weekly Run Goals Planned": "number",
+    "Weekly Strength Completed": "number",
+    "Weekly Strength Planned": "number",
+    "Weekly Avg Sleep": "number",
+    "Weekly Sleep Goals Met": "number",
+    "Weekly Summary": "rich_text",
 }
 
 
@@ -140,11 +151,53 @@ def get_scheduled_workouts(
     return dict(scheduled)
 
 
+def get_sleep_by_date(
+    notion_client: NotionClient,
+    database_id: str | None,
+    start: date,
+    end: date,
+) -> dict[date, float]:
+    if not database_id:
+        return {}
+    sleep_by_date: dict[date, float] = {}
+    cursor = None
+    while True:
+        response = notion_client.data_sources.query(
+            data_source_id=database_id,
+            filter={
+                "and": [
+                    {
+                        "property": "Long Date",
+                        "date": {"on_or_after": start.isoformat()},
+                    },
+                    {
+                        "property": "Long Date",
+                        "date": {"on_or_before": end.isoformat()},
+                    },
+                ]
+            },
+            start_cursor=cursor,
+        )
+        for page in response.get("results", []):
+            properties = page.get("properties", {})
+            raw_date = ((properties.get("Long Date") or {}).get("date") or {}).get(
+                "start"
+            )
+            hours = (properties.get("Total Sleep (h)") or {}).get("number")
+            if raw_date and hours:
+                sleep_by_date[date.fromisoformat(raw_date[:10])] = float(hours)
+        if not response.get("has_more"):
+            break
+        cursor = response.get("next_cursor")
+    return sleep_by_date
+
+
 def update_calendar(
     notion_client: NotionClient,
     garmin_client: GarminClient,
     database_id: str,
     today: date,
+    sleep_database_id: str | None = None,
 ) -> None:
     start, end = month_bounds(today)
     validate_schema(notion_client, database_id)
@@ -157,20 +210,63 @@ def update_calendar(
     )
     activity_summaries = summarize_activities(activities)
     scheduled = get_scheduled_workouts(garmin_client, today.year, today.month)
+    sleep_by_day = get_sleep_by_date(
+        notion_client, sleep_database_id, start, end
+    )
 
     planned_by_day = {
         day: number_property(page, "Planned Miles") for day, page in pages.items()
     }
     weekly_planned: dict[date, float] = defaultdict(float)
     weekly_actual: dict[date, float] = defaultdict(float)
+    weekly_run_planned: dict[date, int] = defaultdict(int)
+    weekly_run_met: dict[date, int] = defaultdict(int)
+    weekly_strength_planned: dict[date, int] = defaultdict(int)
+    weekly_strength_completed: dict[date, int] = defaultdict(int)
+    weekly_sleep_total: dict[date, float] = defaultdict(float)
+    weekly_sleep_days: dict[date, int] = defaultdict(int)
+    weekly_sleep_met: dict[date, int] = defaultdict(int)
     for day in dates_in_range(start, end):
         week_start = day - timedelta(days=day.weekday())
-        weekly_planned[week_start] += planned_by_day.get(day, 0)
-        weekly_actual[week_start] += activity_summaries.get(day, {}).get("run_miles", 0)
+        planned_miles = planned_by_day.get(day, 0)
+        actual = activity_summaries.get(day, {})
+        actual_miles = float(actual.get("run_miles", 0))
+        weekly_planned[week_start] += planned_miles
+        weekly_actual[week_start] += actual_miles
+        if planned_miles > 0:
+            weekly_run_planned[week_start] += 1
+            if actual_miles + 0.005 >= planned_miles:
+                weekly_run_met[week_start] += 1
+
+        planned_strength = sum(
+            activity_category(workout.get("sport_key"), workout.get("name", ""))
+            == "strength"
+            for workout in scheduled.get(day, [])
+        )
+        actual_strength = int(
+            (actual.get("category_counts") or {}).get("strength", 0)
+        )
+        weekly_strength_planned[week_start] += planned_strength
+        weekly_strength_completed[week_start] += min(
+            planned_strength, actual_strength
+        )
+
+        sleep_hours = sleep_by_day.get(day)
+        if sleep_hours is not None:
+            weekly_sleep_total[week_start] += sleep_hours
+            weekly_sleep_days[week_start] += 1
+            if sleep_hours >= 7:
+                weekly_sleep_met[week_start] += 1
 
     for day, page in pages.items():
         actual = activity_summaries.get(
-            day, {"run_miles": 0, "categories": set(), "names": []}
+            day,
+            {
+                "run_miles": 0,
+                "categories": set(),
+                "category_counts": {},
+                "names": [],
+            },
         )
         workouts = scheduled.get(day, [])
         planned_categories = {
@@ -187,6 +283,25 @@ def update_calendar(
         )
         week_start = day - timedelta(days=day.weekday())
         week_end = week_start + timedelta(days=6)
+        summary_day = min(week_end, end)
+        sleep_hours = sleep_by_day.get(day)
+        sleep_days = weekly_sleep_days[week_start]
+        average_sleep = (
+            weekly_sleep_total[week_start] / sleep_days if sleep_days else 0
+        )
+        summary = ""
+        if day == summary_day and week_start <= today:
+            summary = weekly_summary(
+                weekly_actual[week_start],
+                weekly_planned[week_start],
+                weekly_run_met[week_start],
+                weekly_run_planned[week_start],
+                weekly_strength_completed[week_start],
+                weekly_strength_planned[week_start],
+                average_sleep,
+                weekly_sleep_met[week_start],
+                sleep_days,
+            )
         title = day_label(day, complete)
         notion_client.pages.update(
             page_id=page["id"],
@@ -212,6 +327,33 @@ def update_calendar(
                     "number": round(weekly_planned[week_start], 2)
                 },
                 "Weekly Actual Miles": {"number": round(weekly_actual[week_start], 2)},
+                "Sleep Hours": {
+                    "number": round(sleep_hours, 2)
+                    if sleep_hours is not None
+                    else None
+                },
+                "Sleep Status": {
+                    "select": {"name": sleep_status(sleep_hours)}
+                    if sleep_status(sleep_hours)
+                    else None
+                },
+                "Weekly Run Goals Met": {
+                    "number": weekly_run_met[week_start]
+                },
+                "Weekly Run Goals Planned": {
+                    "number": weekly_run_planned[week_start]
+                },
+                "Weekly Strength Completed": {
+                    "number": weekly_strength_completed[week_start]
+                },
+                "Weekly Strength Planned": {
+                    "number": weekly_strength_planned[week_start]
+                },
+                "Weekly Avg Sleep": {"number": round(average_sleep, 2)},
+                "Weekly Sleep Goals Met": {
+                    "number": weekly_sleep_met[week_start]
+                },
+                "Weekly Summary": rich_text_property(summary),
             },
         )
 
@@ -226,8 +368,14 @@ def main() -> None:
     timezone_name = os.getenv("TRAINING_CALENDAR_TIMEZONE", "America/New_York")
     today = datetime.now(ZoneInfo(timezone_name)).date()
     garmin_client, _ = get_garmin_client()
-    notion_client, _ = get_notion_client()
-    update_calendar(notion_client, garmin_client, database_id, today)
+    notion_client, notion_dbs = get_notion_client()
+    update_calendar(
+        notion_client,
+        garmin_client,
+        database_id,
+        today,
+        notion_dbs.sleep,
+    )
     print(f"Training Calendar synced for {today:%B %Y}.")
 
 

@@ -4,7 +4,9 @@ from datetime import date
 from src.helpers._training_calendar import (
     completion_status,
     parse_scheduled_workouts,
+    sleep_status,
     summarize_activities,
+    weekly_summary,
 )
 
 
@@ -49,6 +51,7 @@ class TrainingCalendarTests(unittest.TestCase):
         summary = summarize_activities(activities)[date(2026, 9, 8)]
         self.assertEqual(round(summary["run_miles"], 2), 5.0)
         self.assertEqual(summary["categories"], {"running", "strength"})
+        self.assertEqual(summary["category_counts"]["strength"], 1)
 
     def test_requires_both_mileage_and_planned_workout(self):
         self.assertEqual(
@@ -58,6 +61,19 @@ class TrainingCalendarTests(unittest.TestCase):
         self.assertEqual(
             completion_status(5, 5.01, {"strength"}, {"running"}),
             (True, False, False),
+        )
+
+    def test_sleep_status_thresholds(self):
+        self.assertEqual(sleep_status(8), "🟢 8+ hours")
+        self.assertEqual(sleep_status(7), "🟡 7+ hours")
+        self.assertEqual(sleep_status(6.99), "Under 7 hours")
+        self.assertIsNone(sleep_status(None))
+
+    def test_formats_weekly_summary(self):
+        self.assertEqual(
+            weekly_summary(18.2, 20, 4, 5, 2, 3, 7.6, 5, 7),
+            "🏃 18.2/20.0 mi · 🎯 4/5 run goals · 🏋️ 2/3 strength · "
+            "😴 7.6h avg, 5/7 ≥7h",
         )
 
 

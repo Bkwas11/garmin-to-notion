@@ -101,7 +101,12 @@ def summarize_activities(
     activities: list[dict[str, Any]],
 ) -> dict[date, dict[str, Any]]:
     summaries: dict[date, dict[str, Any]] = defaultdict(
-        lambda: {"run_miles": 0.0, "categories": set(), "names": []}
+        lambda: {
+            "run_miles": 0.0,
+            "categories": set(),
+            "category_counts": defaultdict(int),
+            "names": [],
+        }
     )
     for activity in activities:
         raw_date = activity.get("startTimeLocal") or activity.get("startTimeGMT")
@@ -116,12 +121,42 @@ def summarize_activities(
         category = activity_category(type_key, name)
         summary = summaries[activity_date]
         summary["categories"].add(category)
+        summary["category_counts"][category] += 1
         summary["names"].append(name)
         if category == "running":
             summary["run_miles"] += (
                 float(activity.get("distance") or 0) / METERS_PER_MILE
             )
     return dict(summaries)
+
+
+def sleep_status(hours: float | None) -> str | None:
+    if hours is None or hours <= 0:
+        return None
+    if hours >= 8:
+        return "🟢 8+ hours"
+    if hours >= 7:
+        return "🟡 7+ hours"
+    return "Under 7 hours"
+
+
+def weekly_summary(
+    actual_miles: float,
+    planned_miles: float,
+    run_goals_met: int,
+    run_goals_planned: int,
+    strength_completed: int,
+    strength_planned: int,
+    average_sleep: float,
+    sleep_goals_met: int,
+    sleep_days: int,
+) -> str:
+    return (
+        f"🏃 {actual_miles:.1f}/{planned_miles:.1f} mi · "
+        f"🎯 {run_goals_met}/{run_goals_planned} run goals · "
+        f"🏋️ {strength_completed}/{strength_planned} strength · "
+        f"😴 {average_sleep:.1f}h avg, {sleep_goals_met}/{sleep_days} ≥7h"
+    )
 
 
 def completion_status(

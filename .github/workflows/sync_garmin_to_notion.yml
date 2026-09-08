@@ -31,7 +31,7 @@ jobs:
           NOTION_PR_DB_ID: ${{ secrets.NOTION_PR_DB_ID }}
           NOTION_STEPS_DB_ID: ${{ secrets.NOTION_STEPS_DB_ID }}
           NOTION_SLEEP_DB_ID: ${{ secrets.NOTION_SLEEP_DB_ID }}
-          NOTION_CALENDAR_DB_ID: ${{ secrets.NOTION_CALENDAR_DB_ID }}
+          NOTION_CALENDAR_DB_ID: ${{ secrets.NOTION_CALENDAR_DB_ID || 'aeb2626e-b098-46d5-91bf-fa634c870272' }}
           GARMIN_ACTIVITIES_FETCH_LIMIT: ${{ inputs.GARMIN_ACTIVITIES_FETCH_LIMIT || '10' }}
           TRAINING_CALENDAR_TIMEZONE: 'America/New_York'
           TZ: 'America/New_York'

@@ -2,6 +2,11 @@ METERS_PER_MILE = 1609.344
 KILOMETERS_PER_MILE = 1.609344
 
 
+def meters_to_miles(meters: float | int | None) -> float:
+    """Convert Garmin distance values in metres to statute miles."""
+    return float(meters or 0) / METERS_PER_MILE
+
+
 def format_duration(total_seconds: float, suffix: str = "") -> str:
     """Format seconds as M:SS, optionally followed by a unit suffix."""
     rounded_seconds = max(0, round(total_seconds))

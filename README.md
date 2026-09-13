@@ -57,14 +57,14 @@ For more advanced users, follow these steps to set up the integration:
 
 ## Training Calendar
 
-The Training Calendar on the main Notion dashboard creates one row for every day of the current month. You can enter **Planned Miles** directly in Notion. Each sync then:
+The Training Calendar on the main Notion dashboard creates one row for every day of the current month. You can enter **Miles Planned** directly in Notion. Each sync then:
 
 - imports workouts assigned to dates on your Garmin Connect calendar;
-- totals completed running mileage in miles;
-- checks run goals and matches scheduled workouts to completed activity types;
+- labels planned and completed running distance as **Miles Planned** and **Miles Run**;
+- places an automatic ☐/☑ directly beside each planned workout;
 - adds a checkmark and strikethrough when the full day's plan is complete; and
 - repeats the planned and actual weekly mileage totals on every day in that week.
-- shows a yellow sleep status for 7–7.99 hours and green for 8 or more hours; and
+- shows a red sleep status below 7 hours, yellow for 7–7.99 hours, and green for 8 or more hours; and
 - adds a compact mileage, run-goal, strength, and sleep summary to the final visible day of each week.
 
 Create a separate Notion database and add these properties with the exact names and types shown:
@@ -73,18 +73,16 @@ Create a separate Notion database and add these properties with the exact names 
 | --- | --- |
 | Day | Title |
 | Date | Date |
-| Planned Miles | Number |
-| Actual Miles | Number |
-| Garmin Workouts | Text |
+| Miles Planned | Number |
+| Miles Run | Number |
+| Workout Planned | Text with automatic ☐/☑ |
 | Completed Activities | Text |
-| Run Goal Met | Checkbox |
-| Workout Complete | Checkbox |
 | Complete | Checkbox |
 | Week | Text |
 | Weekly Planned Miles | Number |
 | Weekly Actual Miles | Number |
 | Sleep Hours | Number |
-| Sleep Status | Select: 🟢 8+ hours, 🟡 7+ hours, Under 7 hours |
+| Sleep Status | Select: 🟢 8+ hours, 🟡 7+ hours, 🔴 Under 7 hours |
 | Weekly Run Goals Met | Number |
 | Weekly Run Goals Planned | Number |
 | Weekly Strength Completed | Number |
@@ -93,9 +91,9 @@ Create a separate Notion database and add these properties with the exact names 
 | Weekly Sleep Goals Met | Number |
 | Weekly Summary | Text |
 
-Then share the database with your Notion integration, save its data-source ID as the GitHub Actions secret `NOTION_CALENDAR_DB_ID`, and add a Notion **Calendar view** using the `Date` property to the main dashboard. Show `Planned Miles`, `Actual Miles`, `Garmin Workouts`, `Complete`, and `Weekly Planned Miles` on calendar cards.
+Then share the database with your Notion integration, save its data-source ID as the GitHub Actions secret `NOTION_CALENDAR_DB_ID`, and add a Notion **Calendar view** using the `Date` property to the main dashboard. Show `Miles Planned`, `Miles Run`, `Workout Planned`, `Sleep Hours`, `Sleep Status`, and `Weekly Summary` on calendar cards.
 
-The first run fills the current month. After you edit planned mileage, the next daily run refreshes completion and weekly totals. Activity distances, daily-step distances, longest-run records, longest-ride records, and pace are written in miles. To convert older activity values already stored in Notion, manually run the workflow once with `GARMIN_ACTIVITIES_FETCH_LIMIT` set high enough to include those activities (up to 1000).
+The first run fills the current month. After you edit Miles Planned, the next daily run refreshes completion and weekly totals. Activity distances, daily-step distances, longest-run records, longest-ride records, and pace are written in miles. To convert older activity values already stored in Notion, manually run the workflow once with `GARMIN_ACTIVITIES_FETCH_LIMIT` set high enough to include those activities (up to 1000).
 
 ## Strength Log
 

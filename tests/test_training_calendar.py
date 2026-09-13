@@ -3,6 +3,7 @@ from datetime import date
 
 from src.helpers._training_calendar import (
     completion_status,
+    format_planned_workouts,
     parse_scheduled_workouts,
     sleep_status,
     summarize_activities,
@@ -66,8 +67,25 @@ class TrainingCalendarTests(unittest.TestCase):
     def test_sleep_status_thresholds(self):
         self.assertEqual(sleep_status(8), "🟢 8+ hours")
         self.assertEqual(sleep_status(7), "🟡 7+ hours")
-        self.assertEqual(sleep_status(6.99), "Under 7 hours")
+        self.assertEqual(sleep_status(6.99), "🔴 Under 7 hours")
         self.assertIsNone(sleep_status(None))
+
+    def test_formats_automatic_workout_checkmarks(self):
+        workouts = [
+            {"name": "Upper Body", "sport_key": "strength_training"},
+            {"name": "Easy Run", "sport_key": "running"},
+        ]
+        text, complete = format_planned_workouts(
+            workouts, {"strength": 1, "running": 0}
+        )
+        self.assertEqual(text, "☑ Upper Body; ☐ Easy Run")
+        self.assertFalse(complete)
+
+        text, complete = format_planned_workouts(
+            workouts, {"strength": 1, "running": 1}
+        )
+        self.assertEqual(text, "☑ Upper Body; ☑ Easy Run")
+        self.assertTrue(complete)
 
     def test_formats_weekly_summary(self):
         self.assertEqual(

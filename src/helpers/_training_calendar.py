@@ -137,7 +137,31 @@ def sleep_status(hours: float | None) -> str | None:
         return "🟢 8+ hours"
     if hours >= 7:
         return "🟡 7+ hours"
-    return "Under 7 hours"
+    return "🔴 Under 7 hours"
+
+
+def format_planned_workouts(
+    workouts: list[dict[str, str]],
+    actual_category_counts: dict[str, int],
+) -> tuple[str, bool]:
+    """Render an automatic checkbox beside every scheduled Garmin workout."""
+    remaining = {
+        str(category): int(count)
+        for category, count in actual_category_counts.items()
+    }
+    labels: list[str] = []
+    completed_count = 0
+    for workout in workouts:
+        category = activity_category(
+            workout.get("sport_key"), workout.get("name", "")
+        )
+        completed = remaining.get(category, 0) > 0
+        if completed:
+            remaining[category] -= 1
+            completed_count += 1
+        mark = "☑" if completed else "☐"
+        labels.append(f"{mark} {workout.get('name') or 'Garmin Workout'}")
+    return "; ".join(labels), bool(workouts) and completed_count == len(workouts)
 
 
 def weekly_summary(

@@ -13,7 +13,7 @@ from notion_client import Client as NotionClient
 from src.helpers import get_garmin_client, get_notion_client
 from src.helpers._training_calendar import (
     activity_category,
-    completion_status,
+    format_planned_workouts,
     dates_in_range,
     month_bounds,
     parse_scheduled_workouts,
@@ -25,12 +25,10 @@ from src.helpers._training_calendar import (
 CALENDAR_PROPERTIES = {
     "Day": "title",
     "Date": "date",
-    "Planned Miles": "number",
-    "Actual Miles": "number",
-    "Garmin Workouts": "rich_text",
+    "Miles Planned": "number",
+    "Miles Run": "number",
+    "Workout Planned": "rich_text",
     "Completed Activities": "rich_text",
-    "Run Goal Met": "checkbox",
-    "Workout Complete": "checkbox",
     "Complete": "checkbox",
     "Week": "rich_text",
     "Weekly Planned Miles": "number",
@@ -111,7 +109,7 @@ def create_missing_days(
             properties={
                 "Day": {"title": [{"text": {"content": day_label(day)}}]},
                 "Date": {"date": {"start": day.isoformat()}},
-                "Planned Miles": {"number": 0},
+                "Miles Planned": {"number": 0},
             },
         )
 
@@ -215,7 +213,7 @@ def update_calendar(
     )
 
     planned_by_day = {
-        day: number_property(page, "Planned Miles") for day, page in pages.items()
+        day: number_property(page, "Miles Planned") for day, page in pages.items()
     }
     weekly_planned: dict[date, float] = defaultdict(float)
     weekly_actual: dict[date, float] = defaultdict(float)
@@ -269,17 +267,18 @@ def update_calendar(
             },
         )
         workouts = scheduled.get(day, [])
-        planned_categories = {
-            activity_category(workout.get("sport_key"), workout.get("name", ""))
-            for workout in workouts
-        }
         planned_miles = planned_by_day.get(day, 0)
         actual_miles = float(actual["run_miles"])
-        run_goal_met, workout_complete, complete = completion_status(
-            planned_miles,
-            actual_miles,
-            planned_categories,
-            set(actual["categories"]),
+        workout_text, workout_complete = format_planned_workouts(
+            workouts, actual.get("category_counts") or {}
+        )
+        has_run_goal = planned_miles > 0
+        run_goal_met = has_run_goal and actual_miles + 0.005 >= planned_miles
+        has_plan = has_run_goal or bool(workouts)
+        complete = (
+            has_plan
+            and (not has_run_goal or run_goal_met)
+            and (not workouts or workout_complete)
         )
         week_start = day - timedelta(days=day.weekday())
         week_end = week_start + timedelta(days=6)
@@ -314,13 +313,9 @@ def update_calendar(
                         }
                     ]
                 },
-                "Actual Miles": {"number": round(actual_miles, 2)},
-                "Garmin Workouts": rich_text_property(
-                    "; ".join(w["name"] for w in workouts)
-                ),
+                "Miles Run": {"number": round(actual_miles, 2)},
+                "Workout Planned": rich_text_property(workout_text),
                 "Completed Activities": rich_text_property("; ".join(actual["names"])),
-                "Run Goal Met": {"checkbox": run_goal_met},
-                "Workout Complete": {"checkbox": workout_complete},
                 "Complete": {"checkbox": complete},
                 "Week": rich_text_property(f"{week_start:%b %d}–{week_end:%b %d}"),
                 "Weekly Planned Miles": {
